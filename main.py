@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QDialog,
     QTextEdit,
     QDialogButtonBox,
+    QScrollArea,
     QHBoxLayout,
     QVBoxLayout,
 )
@@ -60,6 +61,28 @@ class GridWidget(QWidget):
         if 0 <= r < len(self.grid) and 0 <= c < len(self.grid[0]):
             self.grid[r][c] = 0 if self.grid[r][c] == 1 else 1
             self.update()
+
+
+class PatternPreview(QWidget):
+    def __init__(self, strings, cell_size=12, alive_color="#00e676", bg_color="#121212"):
+        super().__init__()
+        self.strings = strings
+        self.cell_size = cell_size
+        self.alive_color = QColor(alive_color)
+        self.bg_color = QColor(bg_color)
+        self.rows = len(strings)
+        self.cols = len(strings[0]) if strings else 0
+        self.setFixedSize(self.cols * cell_size, self.rows * cell_size)
+
+    def paintEvent(self, event):
+        p = QPainter(self)
+        p.fillRect(self.rect(), self.bg_color)
+        for r, row in enumerate(self.strings):
+            for c, ch in enumerate(row):
+                if ch == "#":
+                    x0 = c * self.cell_size
+                    y0 = r * self.cell_size
+                    p.fillRect(x0, y0, self.cell_size, self.cell_size, self.alive_color)
 
 
 class GameOfLifeWindow(QMainWindow):
@@ -357,13 +380,29 @@ class GameOfLifeWindow(QMainWindow):
             text.setStyleSheet("QTextEdit { background: #121212; color: #e0e0e0; }")
         else:
             text.setStyleSheet("QTextEdit { background: #ffffff; color: #000000; }")
+        scroll = QScrollArea(dlg)
+        content = QWidget()
+        v = QVBoxLayout()
+        alive = self.palettes.get(self.current_palette, "#00e676")
+        bg = "#121212" if self.dark_mode else "#ffffff"
+        for name, strings in self.patterns.items():
+            name_lbl = QLabel(name)
+            if self.dark_mode:
+                name_lbl.setStyleSheet("QLabel { color: #e0e0e0; }")
+            preview = PatternPreview(strings, cell_size=12, alive_color=alive, bg_color=bg)
+            v.addWidget(name_lbl)
+            v.addWidget(preview)
+        content.setLayout(v)
+        scroll.setWidget(content)
+        scroll.setWidgetResizable(True)
         buttons = QDialogButtonBox(QDialogButtonBox.Close, parent=dlg)
         buttons.rejected.connect(dlg.reject)
         layout = QVBoxLayout()
         layout.addWidget(text)
+        layout.addWidget(scroll)
         layout.addWidget(buttons)
         dlg.setLayout(layout)
-        dlg.resize(600, 500)
+        dlg.resize(700, 700)
         dlg.exec()
 
 
