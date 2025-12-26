@@ -10,6 +10,9 @@ from PySide6.QtWidgets import (
     QLabel,
     QCheckBox,
     QComboBox,
+    QDialog,
+    QTextEdit,
+    QDialogButtonBox,
     QHBoxLayout,
     QVBoxLayout,
 )
@@ -183,6 +186,8 @@ class GameOfLifeWindow(QMainWindow):
         self.patterns_combo.addItems(list(self.patterns.keys()))
         self.btn_insert = QPushButton("Insertar")
         self.btn_insert.clicked.connect(self.insert_selected_pattern)
+        self.btn_info = QPushButton("Info")
+        self.btn_info.clicked.connect(self.show_info)
 
         controls = QHBoxLayout()
         controls.addWidget(self.btn_play)
@@ -197,6 +202,7 @@ class GameOfLifeWindow(QMainWindow):
         controls.addWidget(self.dark_check)
         controls.addWidget(self.patterns_combo)
         controls.addWidget(self.btn_insert)
+        controls.addWidget(self.btn_info)
 
         layout = QVBoxLayout()
         layout.addWidget(self.board)
@@ -312,6 +318,53 @@ class GameOfLifeWindow(QMainWindow):
                 if 0 <= rr < self.rows and 0 <= cc2 < self.cols:
                     self.grid[rr][cc2] = 1
         self.board.update()
+
+    def info_text(self):
+        return (
+            "Juego de la Vida de Conway\n\n"
+            "Descripción:\n"
+            "Autómata celular en un tablero bidimensional de celdas que pueden estar vivas o muertas. "
+            "Cada generación se calcula aplicando las mismas reglas a todas las celdas.\n\n"
+            "Reglas:\n"
+            "1) Supervivencia: una célula viva con 2 o 3 vecinas vivas sigue viva.\n"
+            "2) Nacimiento: una célula muerta con exactamente 3 vecinas vivas nace.\n"
+            "3) En otros casos, la célula muere o permanece muerta.\n\n"
+            "Vecindario:\n"
+            "Se usa el vecindario de Moore (8 vecinos alrededor). Con 'Envoltura' activada, los bordes "
+            "se conectan como en un toro: el tablero no tiene límites.\n\n"
+            "Patrones clásicos:\n"
+            "- Estables: Block, Boat, Loaf, Tub.\n"
+            "- Osciladores: Blinker, Toad, Beacon, Pulsar.\n"
+            "- Naves espaciales: Glider, Lightweight Spaceship (LWSS).\n"
+            "- Otros: Pentomino R. Existen generadores como el Gosper Glider Gun.\n\n"
+            "Controles:\n"
+            "- Iniciar/Pausar, Paso, Limpiar, Aleatorio, Velocidad (ms).\n"
+            "- Envoltura: bordes toroidales.\n"
+            "- Paleta y Oscuro: personaliza colores.\n"
+            "- Patrones: selecciona e inserta centrado.\n\n"
+            "Créditos:\n"
+            "Creado por John H. Conway. Es un sistema determinista con comportamiento emergente muy "
+            "estudiado en matemáticas y ciencias de la computación.\n"
+        )
+
+    def show_info(self):
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Información")
+        text = QTextEdit(dlg)
+        text.setReadOnly(True)
+        text.setPlainText(self.info_text())
+        if self.dark_mode:
+            text.setStyleSheet("QTextEdit { background: #121212; color: #e0e0e0; }")
+        else:
+            text.setStyleSheet("QTextEdit { background: #ffffff; color: #000000; }")
+        buttons = QDialogButtonBox(QDialogButtonBox.Close, parent=dlg)
+        buttons.rejected.connect(dlg.reject)
+        layout = QVBoxLayout()
+        layout.addWidget(text)
+        layout.addWidget(buttons)
+        dlg.setLayout(layout)
+        dlg.resize(600, 500)
+        dlg.exec()
 
 
 def main():
